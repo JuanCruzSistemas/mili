@@ -48,15 +48,16 @@
   h1,h2{font-family:'Gloria Hallelujah',cursive;font-weight:400}
 
   /* ---------- Pantalla 1: mensaje ---------- */
-  #msg h1{font-size:clamp(34px,10vw,52px);color:var(--yellow);transform:rotate(-3deg);margin-bottom:10px}
-  #msg p{font-size:clamp(25px,7.2vw,34px);line-height:1.2;margin:4px 0}
+  #msg h1{font-size:clamp(30px,min(9vw,5.5vh),52px);color:var(--yellow);transform:rotate(-3deg);margin-bottom:10px}
+  #msg p{font-size:clamp(22px,min(6.6vw,3.6vh),34px);line-height:1.2;margin:4px 0}
   #msg .u{text-decoration:underline wavy var(--pink);text-underline-offset:6px}
   #msg .tachado{position:relative;opacity:.8}
   #msg .tachado::after{content:"";position:absolute;left:-4px;right:-4px;top:55%;height:3px;background:var(--chalk);transform:rotate(-4deg);border-radius:2px}
-  #msg .firma{font-family:'Gloria Hallelujah',cursive;font-size:22px;margin-top:14px;color:var(--blue);transform:rotate(-2deg);align-self:flex-end;margin-right:6%}
+  #msg .firma{font-family:'Gloria Hallelujah',cursive;font-size:22px;margin-top:12px;color:var(--blue);transform:rotate(-2deg);align-self:flex-end;margin-right:6%}
   .doodle{position:absolute;pointer-events:none}
   .doodle path,.doodle circle{fill:none;stroke-linecap:round;stroke-linejoin:round}
 
+  .fit{display:flex;flex-direction:column;align-items:center;width:100%;transform-origin:center center}
   #dust{position:absolute;inset:0;width:100%;height:100%;touch-action:none;transition:opacity 1.2s}
   #next{position:absolute;bottom:26px;left:50%;transform:translateX(-50%)}
 
@@ -81,7 +82,6 @@
   /* ---------- Pantalla 3: sí ---------- */
   #yay h2{font-size:clamp(40px,12vw,62px);color:var(--yellow);transform:rotate(-3deg)}
   #yay p{font-size:clamp(26px,7.5vw,34px);margin-top:14px;line-height:1.2}
-  #yay .ps{font-size:22px;opacity:.75;margin-top:26px}
   #confetti{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
   .draw path{stroke-dasharray:600;stroke-dashoffset:600;animation:draw 1.6s ease forwards}
@@ -120,15 +120,17 @@
         <path d="M30 50 C 8 34, 2 22, 8 12 C 14 3, 26 5, 30 16 C 34 4, 47 2, 52 12 C 58 23, 50 35, 30 50 Z" stroke="#ffb3c7" stroke-width="3"/>
       </svg>
 
+      <div class="fit">
       <h1 class="chalk">Hola Mili ✨</h1>
       <p class="chalk">te hice una pizarra</p>
       <p class="chalk">porque decírtelo normal</p>
       <p class="chalk">era <span class="tachado">muy fácil</span> muy poco</p>
       <p class="chalk" style="margin-top:14px">me encanta hablar con vos,</p>
-      <p class="chalk">que me hagas reír sin intentarlo</p>
+      <p class="chalk">que me hagas reír sin querer</p>
       <p class="chalk">y pienso en vos <span class="u">bastante</span> más</p>
       <p class="chalk">de lo que admito 🙈</p>
       <div class="firma chalk">— Juanchi</div>
+      </div>
     </section>
 
     <canvas id="dust"></canvas>
@@ -136,6 +138,7 @@
 
     <!-- ===== 2. Pregunta ===== -->
     <section class="screen hidden" id="ask">
+      <div class="fit">
       <h2 class="chalk">¿Salimos<br>mañana? 👉👈</h2>
       <p class="sub chalk">(pensalo bien)</p>
       <div class="row">
@@ -143,17 +146,19 @@
         <button class="btn chalk" id="no">no</button>
       </div>
       <p id="tease" class="chalk"></p>
+      </div>
     </section>
 
     <!-- ===== 3. ¡Sí! ===== -->
     <section class="screen hidden" id="yay">
+      <div class="fit">
       <svg class="chalk draw" width="120" height="108" viewBox="0 0 60 54" style="margin-bottom:10px">
         <path d="M30 50 C 8 34, 2 22, 8 12 C 14 3, 26 5, 30 16 C 34 4, 47 2, 52 12 C 58 23, 50 35, 30 50 Z" stroke="#ffb3c7" stroke-width="3" fill="none" stroke-linecap="round"/>
       </svg>
       <h2 class="chalk">¡Sabía! 🥹</h2>
       <p class="chalk">Entonces mañana es una cita.</p>
       <p class="chalk">Ya no te podés arrepentir,<br>quedó escrito en tiza 😌</p>
-      <p class="ps chalk">(mandame captura de esto)</p>
+      </div>
     </section>
 
     <canvas id="confetti"></canvas>
@@ -209,10 +214,15 @@
     ctx.save();
     ctx.translate(W / 2, H / 2 - 20);
     ctx.rotate(-0.06);
-    ctx.font = `${Math.min(46, W / 8)}px 'Gloria Hallelujah', cursive`;
+    const fitFont = (txt, fam, max) => {
+      let size = max;
+      do { ctx.font = `${size}px ${fam}`; size -= 1; }
+      while (ctx.measureText(txt).width > W * 0.82 && size > 10);
+    };
+    fitFont('borrame con el dedo', "'Gloria Hallelujah', cursive", 44);
     ctx.fillText('borrame con el dedo', 0, 0);
-    ctx.font = `${Math.min(30, W / 12)}px 'Caveat', cursive`;
-    ctx.fillText('hay algo escrito abajo 👆', 0, 50);
+    fitFont('hay algo escrito abajo 👆', "'Caveat', cursive", 32);
+    ctx.fillText('hay algo escrito abajo 👆', 0, 46);
     ctx.restore();
     // flechita garabato
     ctx.strokeStyle = '#3d4d44'; ctx.lineWidth = 3;
@@ -272,7 +282,20 @@
   dust.addEventListener('pointerup', stop);
   dust.addEventListener('pointercancel', stop);
 
-  document.fonts.ready.then(paintDust);
+  /* escala cada pantalla para que nunca se salga */
+  function fitAll() {
+    document.querySelectorAll('.fit').forEach(f => {
+      f.style.transform = 'none';
+      const scr = f.parentElement;
+      const cs = getComputedStyle(scr);
+      const availH = scr.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const availW = scr.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const k = Math.min(1, availH / f.scrollHeight, availW / f.scrollWidth);
+      if (k < 1) f.style.transform = `scale(${k * 0.97})`;
+    });
+  }
+  document.fonts.ready.then(() => { fitAll(); paintDust(); });
+  window.addEventListener('resize', fitAll);
   let rt;
   window.addEventListener('resize', () => {
     if (revealed) return;
