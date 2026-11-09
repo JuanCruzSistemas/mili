@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#3b2a1e">
+<title>Para Mili ✏️</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wood:#6b4426; --wood-dark:#3b2a1e;
+    --board:#24352d; --board-2:#2c4136;
+    --chalk:#f3f1e7; --pink:#ffb3c7; --yellow:#ffe58a; --blue:#a9dcff; --green:#b9f0b0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:var(--wood-dark);overscroll-behavior:none}
+  body{font-family:'Caveat',cursive;color:var(--chalk);user-select:none;-webkit-user-select:none}
+
+  .frame{
+    position:fixed;inset:0;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));
+    background:
+      repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 3px,transparent 3px 11px),
+      linear-gradient(135deg,#7a4e2c,#5a381f 60%,#6b4426);
+  }
+  .board{
+    position:relative;width:100%;height:100%;border-radius:10px;overflow:hidden;
+    background:
+      radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.06),transparent 60%),
+      radial-gradient(ellipse at 80% 90%,rgba(255,255,255,.04),transparent 50%),
+      linear-gradient(160deg,var(--board-2),var(--board));
+    box-shadow:inset 0 0 40px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.15);
+  }
+  /* manchas sutiles de tiza vieja */
+  .board::before{content:"";position:absolute;inset:0;opacity:.18;pointer-events:none;
+    background:
+      radial-gradient(circle at 15% 70%,#fff 0,transparent 18%),
+      radial-gradient(circle at 70% 25%,#fff 0,transparent 14%),
+      radial-gradient(circle at 55% 85%,#fff 0,transparent 10%);
+    filter:blur(30px)}
+  .tray{position:absolute;left:12%;right:12%;bottom:max(4px,env(safe-area-inset-bottom));height:8px;border-radius:4px;background:#4a2f1a;box-shadow:0 2px 3px rgba(0,0,0,.4)}
+
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px;text-align:center;transition:opacity .6s}
+  .hidden{opacity:0;pointer-events:none}
+
+  .chalk{text-shadow:0 0 1px rgba(255,255,255,.6),1px 1px 0 rgba(255,255,255,.08);filter:url(#rough)}
+  h1,h2{font-family:'Gloria Hallelujah',cursive;font-weight:400}
+
+  /* ---------- Pantalla 1: mensaje ---------- */
+  #msg h1{font-size:clamp(34px,10vw,52px);color:var(--yellow);transform:rotate(-3deg);margin-bottom:10px}
+  #msg p{font-size:clamp(25px,7.2vw,34px);line-height:1.2;margin:4px 0}
+  #msg .u{text-decoration:underline wavy var(--pink);text-underline-offset:6px}
+  #msg .tachado{position:relative;opacity:.8}
+  #msg .tachado::after{content:"";position:absolute;left:-4px;right:-4px;top:55%;height:3px;background:var(--chalk);transform:rotate(-4deg);border-radius:2px}
+  #msg .firma{font-family:'Gloria Hallelujah',cursive;font-size:22px;margin-top:14px;color:var(--blue);transform:rotate(-2deg);align-self:flex-end;margin-right:6%}
+  .doodle{position:absolute;pointer-events:none}
+  .doodle path,.doodle circle{fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+  #dust{position:absolute;inset:0;width:100%;height:100%;touch-action:none;transition:opacity 1.2s}
+  #next{position:absolute;bottom:26px;left:50%;transform:translateX(-50%)}
+
+  /* ---------- Botones de tiza ---------- */
+  .btn{
+    font-family:'Gloria Hallelujah',cursive;font-size:24px;color:var(--chalk);background:transparent;
+    border:3px solid var(--chalk);border-radius:255px 15px 225px 15px/15px 225px 15px 255px;
+    padding:8px 26px;cursor:pointer;touch-action:manipulation;transition:transform .25s, opacity .4s;
+  }
+  .btn:active{transform:scale(.95)}
+  #next.btn{animation:bob 1.6s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateX(-50%) translateY(-5px)}}
+
+  /* ---------- Pantalla 2: pregunta ---------- */
+  #ask h2{font-size:clamp(36px,11vw,56px);line-height:1.1;transform:rotate(-2deg)}
+  #ask .sub{font-size:26px;margin:10px 0 34px;opacity:.85}
+  .row{display:flex;gap:26px;align-items:center;justify-content:center;min-height:90px}
+  #yes{color:var(--green);border-color:var(--green);font-size:30px;padding:10px 34px}
+  #no{color:var(--pink);border-color:var(--pink);transition:left .18s ease-out, top .18s ease-out, transform .25s}
+  #tease{font-size:26px;min-height:34px;margin-top:26px;color:var(--yellow)}
+
+  /* ---------- Pantalla 3: sí ---------- */
+  #yay h2{font-size:clamp(40px,12vw,62px);color:var(--yellow);transform:rotate(-3deg)}
+  #yay p{font-size:clamp(26px,7.5vw,34px);margin-top:14px;line-height:1.2}
+  #yay .ps{font-size:22px;opacity:.75;margin-top:26px}
+  #confetti{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+  .draw path{stroke-dasharray:600;stroke-dashoffset:600;animation:draw 1.6s ease forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes wiggle{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+  .wiggle{animation:wiggle 2.4s ease-in-out infinite}
+</style>
+</head>
+<body>
+
+<!-- filtro para que todo parezca trazo de tiza -->
+<svg width="0" height="0" style="position:absolute">
+  <filter id="rough">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="1.8"/>
+  </filter>
+</svg>
+
+<div class="frame">
+  <div class="board" id="board">
+
+    <!-- ===== 1. Mensaje (debajo de la tiza) ===== -->
+    <section class="screen" id="msg">
+      <!-- garabatos -->
+      <svg class="doodle chalk wiggle" style="top:5%;left:6%" width="54" height="54" viewBox="0 0 50 50">
+        <path d="M25 4 L30 18 L45 19 L33 28 L37 43 L25 34 L13 43 L17 28 L5 19 L20 18 Z" stroke="#ffe58a" stroke-width="2.5"/>
+      </svg>
+      <svg class="doodle chalk" style="top:7%;right:7%" width="70" height="40" viewBox="0 0 70 40">
+        <path d="M5 30 Q12 5 22 25 T40 22 T62 12" stroke="#a9dcff" stroke-width="2.5"/>
+      </svg>
+      <svg class="doodle chalk" style="bottom:9%;left:7%" width="60" height="60" viewBox="0 0 60 60">
+        <circle cx="30" cy="30" r="9" stroke="#ffe58a" stroke-width="2.5"/>
+        <path d="M30 6v8M30 46v8M6 30h8M46 30h8M13 13l6 6M41 41l6 6M47 13l-6 6M19 41l-6 6" stroke="#ffe58a" stroke-width="2.5"/>
+      </svg>
+      <svg class="doodle chalk wiggle" style="bottom:12%;right:8%" width="62" height="56" viewBox="0 0 60 54">
+        <path d="M30 50 C 8 34, 2 22, 8 12 C 14 3, 26 5, 30 16 C 34 4, 47 2, 52 12 C 58 23, 50 35, 30 50 Z" stroke="#ffb3c7" stroke-width="3"/>
+      </svg>
+
+      <h1 class="chalk">Hola Mili ✨</h1>
+      <p class="chalk">te hice una pizarra</p>
+      <p class="chalk">porque decírtelo normal</p>
+      <p class="chalk">era <span class="tachado">muy fácil</span> muy poco</p>
+      <p class="chalk" style="margin-top:14px">me encanta hablar con vos,</p>
+      <p class="chalk">que me hagas reír sin intentarlo</p>
+      <p class="chalk">y pienso en vos <span class="u">bastante</span> más</p>
+      <p class="chalk">de lo que admito 🙈</p>
+      <div class="firma chalk">— Juanchi</div>
+    </section>
+
+    <canvas id="dust"></canvas>
+    <button class="btn chalk hidden" id="next">seguir →</button>
+
+    <!-- ===== 2. Pregunta ===== -->
+    <section class="screen hidden" id="ask">
+      <h2 class="chalk">¿Salimos<br>mañana? 👉👈</h2>
+      <p class="sub chalk">(pensalo bien)</p>
+      <div class="row">
+        <button class="btn chalk" id="yes">sí</button>
+        <button class="btn chalk" id="no">no</button>
+      </div>
+      <p id="tease" class="chalk"></p>
+    </section>
+
+    <!-- ===== 3. ¡Sí! ===== -->
+    <section class="screen hidden" id="yay">
+      <svg class="chalk draw" width="120" height="108" viewBox="0 0 60 54" style="margin-bottom:10px">
+        <path d="M30 50 C 8 34, 2 22, 8 12 C 14 3, 26 5, 30 16 C 34 4, 47 2, 52 12 C 58 23, 50 35, 30 50 Z" stroke="#ffb3c7" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg>
+      <h2 class="chalk">¡Sabía! 🥹</h2>
+      <p class="chalk">Entonces mañana es una cita.</p>
+      <p class="chalk">Ya no te podés arrepentir,<br>quedó escrito en tiza 😌</p>
+      <p class="ps chalk">(mandame captura de esto)</p>
+    </section>
+
+    <canvas id="confetti"></canvas>
+    <div class="tray"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const board = document.getElementById('board');
+  const dust = document.getElementById('dust');
+  const ctx = dust.getContext('2d');
+  const next = document.getElementById('next');
+  const msg = document.getElementById('msg');
+  const ask = document.getElementById('ask');
+  const yay = document.getElementById('yay');
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let revealed = false, W = 0, H = 0;
+
+  /* ---------- 1. Capa de tiza para borrar ---------- */
+  function paintDust() {
+    const r = board.getBoundingClientRect();
+    W = r.width; H = r.height;
+    dust.width = W * dpr; dust.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+
+    // base de tiza difuminada
+    ctx.fillStyle = '#c9cec6';
+    ctx.fillRect(0, 0, W, H);
+    // trazos de borrador / tiza para que se vea sucio
+    for (let i = 0; i < 260; i++) {
+      ctx.strokeStyle = Math.random() < .5
+        ? `rgba(255,255,255,${.15 + Math.random() * .3})`
+        : `rgba(80,95,85,${.05 + Math.random() * .15})`;
+      ctx.lineWidth = 6 + Math.random() * 30;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      const x = Math.random() * W, y = Math.random() * H;
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(x + (Math.random() - .5) * 160, y + (Math.random() - .5) * 60,
+                           x + (Math.random() - .5) * 220, y + (Math.random() - .5) * 40);
+      ctx.stroke();
+    }
+    // granitos
+    for (let i = 0; i < 2500; i++) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.random() * .5})`;
+      ctx.fillRect(Math.random() * W, Math.random() * H, 1.5, 1.5);
+    }
+    // instrucciones escritas en la tiza
+    ctx.fillStyle = '#3d4d44';
+    ctx.textAlign = 'center';
+    ctx.save();
+    ctx.translate(W / 2, H / 2 - 20);
+    ctx.rotate(-0.06);
+    ctx.font = `${Math.min(46, W / 8)}px 'Gloria Hallelujah', cursive`;
+    ctx.fillText('borrame con el dedo', 0, 0);
+    ctx.font = `${Math.min(30, W / 12)}px 'Caveat', cursive`;
+    ctx.fillText('hay algo escrito abajo 👆', 0, 50);
+    ctx.restore();
+    // flechita garabato
+    ctx.strokeStyle = '#3d4d44'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - 40, H / 2 + 70);
+    ctx.quadraticCurveTo(W / 2, H / 2 + 120, W / 2 + 40, H / 2 + 80);
+    ctx.lineTo(W / 2 + 28, H / 2 + 78);
+    ctx.moveTo(W / 2 + 40, H / 2 + 80);
+    ctx.lineTo(W / 2 + 38, H / 2 + 92);
+    ctx.stroke();
+  }
+
+  let drawing = false, last = null, moves = 0;
+  function pos(e) {
+    const r = dust.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function erase(a, b) {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(46, W / 8);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    // bordes irregulares, como borrador real
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath();
+      ctx.arc(b.x + (Math.random() - .5) * 40, b.y + (Math.random() - .5) * 40, 6 + Math.random() * 10, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  function cleared() {
+    const data = ctx.getImageData(0, 0, dust.width, dust.height).data;
+    let clear = 0, total = 0;
+    for (let i = 3; i < data.length; i += 4 * 40) { total++; if (data[i] < 100) clear++; }
+    return clear / total;
+  }
+  function checkReveal() {
+    if (revealed) return;
+    if (cleared() > 0.5) {
+      revealed = true;
+      dust.style.opacity = '0';
+      dust.style.pointerEvents = 'none';
+      if (navigator.vibrate) navigator.vibrate(30);
+      setTimeout(() => next.classList.remove('hidden'), 2200);
+    }
+  }
+
+  dust.addEventListener('pointerdown', e => {
+    drawing = true; last = pos(e); erase(last, last);
+    dust.setPointerCapture(e.pointerId);
+  });
+  dust.addEventListener('pointermove', e => {
+    if (!drawing) return;
+    const p = pos(e); erase(last, p); last = p;
+    if (++moves % 25 === 0) checkReveal();
+  });
+  const stop = () => { if (drawing) { drawing = false; checkReveal(); } };
+  dust.addEventListener('pointerup', stop);
+  dust.addEventListener('pointercancel', stop);
+
+  document.fonts.ready.then(paintDust);
+  let rt;
+  window.addEventListener('resize', () => {
+    if (revealed) return;
+    clearTimeout(rt); rt = setTimeout(paintDust, 150);
+  });
+
+  next.addEventListener('click', () => {
+    msg.classList.add('hidden'); next.classList.add('hidden');
+    setTimeout(() => ask.classList.remove('hidden'), 400);
+  });
+
+  /* ---------- 2. Botón "no" que se escapa ---------- */
+  const yes = document.getElementById('yes');
+  const no = document.getElementById('no');
+  const tease = document.getElementById('tease');
+  const frases = [
+    'uy, se te resbaló 😅',
+    'casi casi',
+    'ese botón está roto, probá el otro',
+    '¿segura? 🤨',
+    'el "no" se fue a dormir',
+    'dale que el "sí" está ahí nomás',
+    'te estoy viendo 👀',
+    'ok ya es obvio, tocá el sí 😌'
+  ];
+  let tries = 0;
+  function overlaps(a, b) {
+    return !(a.right < b.left - 20 || a.left > b.right + 20 || a.bottom < b.top - 20 || a.top > b.bottom + 20);
+  }
+  let lastFlee = 0;
+  function flee(e) {
+    e.preventDefault(); e.stopPropagation();
+    const now = Date.now();
+    if (now - lastFlee < 300) return; // un toque dispara varios eventos
+    lastFlee = now;
+    const br = board.getBoundingClientRect();
+    const nr = no.getBoundingClientRect();
+    const yr = yes.getBoundingClientRect();
+    if (no.style.position !== 'absolute') {
+      no.style.position = 'absolute';
+      no.style.left = (nr.left - br.left) + 'px';
+      no.style.top = (nr.top - br.top) + 'px';
+      board.appendChild(no);
+      no.offsetWidth; // fuerza reflow para que anime
+    }
+    const pad = 20;
+    let x, y, tries2 = 0;
+    do {
+      x = pad + Math.random() * (br.width - nr.width - pad * 2);
+      y = pad + Math.random() * (br.height - nr.height - pad * 2);
+      tries2++;
+    } while (tries2 < 20 && (
+      overlaps({ left: br.left + x, right: br.left + x + nr.width, top: br.top + y, bottom: br.top + y + nr.height }, yr) ||
+      Math.hypot(br.left + x - nr.left, br.top + y - nr.top) < 120));
+    no.style.left = x + 'px';
+    no.style.top = y + 'px';
+    tease.textContent = frases[tries % frases.length];
+    tries++;
+    yes.style.transform = `scale(${Math.min(1 + tries * 0.12, 1.9)})`;
+    if (tries > 6) no.style.transform = `scale(${Math.max(1 - (tries - 6) * 0.12, 0.45)})`;
+  }
+  ['pointerdown', 'pointerenter', 'touchstart', 'click'].forEach(ev =>
+    no.addEventListener(ev, flee, { passive: false }));
+
+  /* ---------- 3. ¡Sí! + confeti de tiza ---------- */
+  yes.addEventListener('click', () => {
+    ask.classList.add('hidden');
+    no.classList.add('hidden');
+    setTimeout(() => yay.classList.remove('hidden'), 350);
+    if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+    confetti();
+  });
+
+  function confetti() {
+    const c = document.getElementById('confetti');
+    const g = c.getContext('2d');
+    const r = board.getBoundingClientRect();
+    c.width = r.width * dpr; c.height = r.height * dpr;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const colors = ['#f3f1e7', '#ffb3c7', '#ffe58a', '#a9dcff', '#b9f0b0'];
+    const bits = Array.from({ length: 140 }, () => ({
+      x: r.width / 2 + (Math.random() - .5) * 60,
+      y: r.height * .45,
+      vx: (Math.random() - .5) * 11,
+      vy: -6 - Math.random() * 9,
+      w: 4 + Math.random() * 8, h: 3 + Math.random() * 4,
+      a: Math.random() * Math.PI, va: (Math.random() - .5) * .3,
+      col: colors[(Math.random() * colors.length) | 0],
+      heart: Math.random() < .25
+    }));
+    const t0 = performance.now();
+    (function frame(t) {
+      g.clearRect(0, 0, r.width, r.height);
+      bits.forEach(b => {
+        b.vy += .25; b.vx *= .99; b.x += b.vx; b.y += b.vy; b.a += b.va;
+        g.save(); g.translate(b.x, b.y); g.rotate(b.a);
+        g.fillStyle = b.col; g.globalAlpha = .9;
+        if (b.heart) { g.font = '16px sans-serif'; g.fillText('♥', -6, 6); }
+        else g.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+        g.restore();
+      });
+      if (t - t0 < 5000) requestAnimationFrame(frame);
+      else g.clearRect(0, 0, r.width, r.height);
+    })(t0);
+  }
+})();
+</script>
+</body>
+</html>
